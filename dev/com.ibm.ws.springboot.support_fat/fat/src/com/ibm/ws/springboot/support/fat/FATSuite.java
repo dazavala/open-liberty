@@ -71,7 +71,8 @@ import com.ibm.ws.springboot.support.fat.utility.SpringBootUtilityThinTest;
                 JavaeeFeatureTests20.class,
                 TemplateTests.class,
                 NonZipExtensionFilesInBootInfLibTests20.class,
-                MultiModuleProjectTests20.class
+                MultiModuleProjectTests20.class,
+                DatasourceTests20.class
 })
 
 public class FATSuite {

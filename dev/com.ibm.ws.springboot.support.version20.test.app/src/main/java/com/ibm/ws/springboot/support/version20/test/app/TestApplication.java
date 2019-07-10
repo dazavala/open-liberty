@@ -10,7 +10,12 @@
  *******************************************************************************/
 package com.ibm.ws.springboot.support.version20.test.app;
 
+import java.sql.Connection;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.servlet.ServletContext;
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -99,5 +104,17 @@ public class TestApplication {
 		}
 		return "SPRING BOOT, YOU GOT" + ((null==clazz) ? " NO " : " ") + "CLAZZ: " + clazzName;
 	}
-	
+
+	@RequestMapping("/testDefaultDatasource")
+	public String testDefaultDatasource() { 
+		try {
+			DataSource ds = InitialContext.doLookup("java:comp/DefaultDataSource");
+			try (Connection con = ds.getConnection()) {
+				return "PASSED";
+			}
+		} catch (Exception e) {
+			e.printStackTrace(System.out);
+		}
+		return "FAILED";
+	}
 }
