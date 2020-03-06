@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2015 IBM Corporation and others.
+ * Copyright (c) 2011, 2020 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -77,7 +77,7 @@ public class SubsystemFeatureDefinitionImpl implements ProvisioningFeatureDefini
      * Create a new subsystem definition with the specified immutable attributes.
      * Called when rebuilding from a cache.
      *
-     * @param attr Immutable attributes
+     * @param attr    Immutable attributes
      * @param details Provisioning details (will be cleared when provisioning operation is complete)
      * @see #load(String, SubsystemFeatureDefinitionImpl)
      * @see FeatureDefinitionUtils#loadAttributes(String, ImmutableAttributes)
@@ -99,8 +99,8 @@ public class SubsystemFeatureDefinitionImpl implements ProvisioningFeatureDefini
      * <p>
      * Some operations, like finding resource bundles, may not work.
      *
-     * @param repoType emtpy/null for core, "usr" for user extension, or the product
-     *            extension name
+     * @param repoType    emtpy/null for core, "usr" for user extension, or the product
+     *                        extension name
      * @param inputStream The input stream to read from
      * @see ExtensionConstants#CORE_EXTENSION
      * @see ExtensionConstants#USER_EXTENSION
@@ -121,8 +121,8 @@ public class SubsystemFeatureDefinitionImpl implements ProvisioningFeatureDefini
      * specified input stream.
      *
      * @param repoType emtpy/null for core, "usr" for user extension, or the product
-     *            extension name
-     * @param file Subsystem feature definition manifest file
+     *                     extension name
+     * @param file     Subsystem feature definition manifest file
      *
      * @see ExtensionConstants#CORE_EXTENSION
      * @see ExtensionConstants#USER_EXTENSION
@@ -239,6 +239,24 @@ public class SubsystemFeatureDefinitionImpl implements ProvisioningFeatureDefini
     @Override
     public boolean isAutoFeature() {
         return iAttr.isAutoFeature;
+    }
+
+    // Aliasing is used only for features renamed in jakartaee9+ that have
+    // equivalent features in javaee6..8.
+
+    static HashMap<String, String> jakartaee2javaee = new HashMap<String, String>(3);
+    static {
+        // Pre-production example
+        jakartaee2javaee.put("com.ibm.websphere.appserver.feces-2.4", "com.ibm.websphere.appserver.jsfoo-2.4");
+        jakartaee2javaee.put("feces-2.4", "jsfoo-2.4");
+    }
+
+    /**
+     * @return An alternate symbolic name for this feature or null.
+     */
+    @Override
+    public String getSymbolicAlias() {
+        return SubsystemFeatureDefinitionImpl.jakartaee2javaee.get(iAttr.symbolicName);
     }
 
     @Override

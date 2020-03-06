@@ -339,4 +339,8 @@ public class KernelResolverEsa implements ProvisioningFeatureDefinition {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public String getSymbolicAlias() {
+        throw new UnsupportedOperationException();
+    }
 }

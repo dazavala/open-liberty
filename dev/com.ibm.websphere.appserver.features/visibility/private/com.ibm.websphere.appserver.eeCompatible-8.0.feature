@@ -1,5 +1,5 @@
 -include= ~${workspace}/cnf/resources/bnd/feature.props
-symbolicName=com.ibm.websphere.appserver.javaeeCompatible-8.0
+symbolicName=com.ibm.websphere.appserver.eeCompatible-8.0
 visibility=private
 singleton=true
 Subsystem-Version: 8.0.0
@@ -7,3 +7,4 @@ Subsystem-Version: 8.0.0
 kind=ga
 edition=core
 WLP-Activation-Type: parallel
+Subsystem-Name: Java EE 8

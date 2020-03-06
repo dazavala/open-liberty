@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corporation and others.
+ * Copyright (c) 2009, 2020 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -329,7 +329,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * activated and when changes to our configuration have occurred.
      *
      * @param componentContext
-     *            the OSGi DS context
+     *                             the OSGi DS context
      */
     @Activate()
     protected void activate(ComponentContext componentContext, Map<String, Object> properties) {
@@ -439,7 +439,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * implementation is stopped.
      *
      * @param componentContext
-     *            the OSGi DS context
+     *                             the OSGi DS context
      */
     @Deactivate()
     @FFDCIgnore(InterruptedException.class)
@@ -478,7 +478,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * reference required by activator, inject directly.
      *
      * @param locationService
-     *            a location service
+     *                            a location service
      */
     @Reference(name = "locationService", service = WsLocationAdmin.class)
     protected void setLocationService(WsLocationAdmin locationService) {
@@ -491,7 +491,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * deactivate. Do nothing.
      *
      * @param locationService
-     *            a location service
+     *                            a location service
      */
     protected void unsetLocationService(WsLocationAdmin locationService) {}
 
@@ -568,7 +568,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * Inject an <code>ExecutorService</code> service instance.
      *
      * @param executorService
-     *            an executor service
+     *                            an executor service
      */
     @Reference(name = "executorService", service = ExecutorService.class)
     protected void setExecutorService(ExecutorService executorService) {
@@ -579,7 +579,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * Remove the <code>ExecutorService</code> service instance.
      *
      * @param executorService
-     *            an executor service
+     *                            an executor service
      */
     protected void unsetExecutorService(ExecutorService executorService) {}
 
@@ -868,9 +868,9 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      *
      * @param provisioningMode
      * @param preInstalledFeatures
-     * @param deletedAutoFeatures - The list of deleted AutoFeatures.This is used to trace which auto features have been deleted.
+     * @param deletedAutoFeatures       - The list of deleted AutoFeatures.This is used to trace which auto features have been deleted.
      * @param deletedPublicAutoFeatures - The list of deleted Public AutoFeatures.This is used to issue to the console which public
-     *            auto features have been deleted.
+     *                                      auto features have been deleted.
      */
     private void writeUpdateMessages(ProvisioningMode provisioningMode, Set<String> preInstalledFeatures, Set<String> deletedAutoFeatures,
                                      Set<String> deletedPublicAutoFeatures) {
@@ -1242,10 +1242,10 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
     /**
      * Update installed features and bundles
      *
-     * @param locService Location service used to resolve resources (feature definitions or bundles)
-     * @param provisioner Provisioner for installing/starting bundles
+     * @param locService           Location service used to resolve resources (feature definitions or bundles)
+     * @param provisioner          Provisioner for installing/starting bundles
      * @param preInstalledFeatures
-     * @param newFeatureSet New/revised list of active features
+     * @param newFeatureSet        New/revised list of active features
      * @return true if no errors occurred during the update, false otherwise
      */
     @FFDCIgnore(Throwable.class)
@@ -1462,7 +1462,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * and the unsatisfied java version dependency.
      *
      * @param installedBundles A list of the currently installed bundles
-     * @param features A list of the currently installed features
+     * @param features         A list of the currently installed features
      */
     private void analyzeUnresolvedBundles(List<Bundle> installedBundles, Set<String> features) {
 
@@ -1590,7 +1590,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * Find which features include the given bundle
      *
      * @param features The feature list to scan for this bundle
-     * @param b1 The bundle to look for in features
+     * @param b1       The bundle to look for in features
      * @return List of features this bundle is included in
      */
     public Set<String> findIncludingFeatures(Set<String> features, Bundle b1) {
@@ -1612,7 +1612,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
     }
 
     /**
-     * Reports the errors that happend during feature resolution.
+     * Reports the errors that happened during feature resolution.
      *
      * @param result
      * @param restrictedAccessAttempts
@@ -1683,32 +1683,69 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
             String conflict2 = null;
             String configured2 = null;
             String chain2 = null;
+            boolean isEeCompatibleConflict;
+            String eeConflict1 = null;
+            String eeConflict2 = null;
             for (Chain chain : conflict.getValue()) {
                 List<String> candidates = chain.getCandidates();
                 if (conflict1 == null) {
                     conflict1 = candidates.get(0);
+                    isEeCompatibleConflict = isEeCompatible(conflict1);
                     if (chain.getChain().isEmpty()) {
                         // this is a configured root
                         configured1 = conflict1;
                         chain1 = conflict1;
+                        if (isEeCompatibleConflict)
+                            eeConflict1 = chain.getChain().get(chain.getChain().size() - 1);
                     } else {
                         configured1 = chain.getChain().get(0);
                         chain1 = buildChainString(chain.getChain(), conflict1);
+                        if (isEeCompatibleConflict)
+                            eeConflict1 = chain.getChain().get(chain.getChain().size() - 1);
                     }
                 } else if (!!!conflict1.equals(candidates.get(0))) {
                     conflict2 = candidates.get(0);
+                    isEeCompatibleConflict = isEeCompatible(conflict2);
                     if (chain.getChain().isEmpty()) {
                         // this is a configured root
                         configured2 = conflict2;
                         chain2 = conflict2;
+                        if (isEeCompatibleConflict)
+                            eeConflict2 = conflict2;
                     } else {
                         configured2 = chain.getChain().get(0);
                         chain2 = buildChainString(chain.getChain(), conflict2);
+                        if (isEeCompatibleConflict)
+                            eeConflict2 = chain.getChain().get(chain.getChain().size() - 1);
                     }
                     break;
                 }
             }
-            Tr.error(tc, "UPDATE_CONFLICT_FEATURE_ERROR", getFeatureName(conflict1), getFeatureName(conflict2), getFeatureName(configured1), getFeatureName(configured2));
+
+            if (isEeCompatible(conflict1)) {
+                boolean ignoreVersion = true;
+                if (getEeCompatiblePlatform(conflict1, ignoreVersion).equals(getEeCompatiblePlatform(conflict2, ignoreVersion))) {
+                    // Conflicting features both support "Java EE X" or "Jakarta EE X", but not both
+                    Tr.error(tc, "UPDATE_CONFLICT_INCOMPATIBLE_EE_FEATURES_SAME_PLATFORM_ERROR", getPreferredEePlatform(configured1),
+                             getPreferredEePlatform(configured2), getFeatureName(configured1), getFeatureName(configured2));
+                } else {
+                    // One conflicting feature supports "Jakarta EE X", the other "Java EE X"
+                    Tr.error(tc, "UPDATE_CONFLICT_INCOMPATIBLE_EE_FEATURES_DIFFERENT_PLATFORM_ERROR", getPreferredEePlatform(eeConflict1),
+                             getPreferredEePlatform(eeConflict2), getFeatureName(eeConflict1), getFeatureName(eeConflict2), getFeatureName(configured1),
+                             getFeatureName(configured2));
+
+                    // TODO: Discuss with POC for agreement. Should we remove all jakarta and javaee
+                    // features from provision or none of them?  This solution assumes we remove features
+                    // having an immediate dependency on eeCompatible-x.0 in order to force resolution
+                    // errors that will further alarm the user that the configuration is not supported.
+
+                    // Remove incompatible features to force failures
+                    result.getResolvedFeatures().remove(getFeatureName(eeConflict1));
+                    result.getResolvedFeatures().remove(getFeatureName(eeConflict2));
+                }
+            } else {
+                Tr.error(tc, "UPDATE_CONFLICT_FEATURE_ERROR", getFeatureName(conflict1), getFeatureName(conflict2), getFeatureName(configured1), getFeatureName(configured2));
+            }
             String conflictMsg = "Unable to load conflicting versions of features \"" + conflict1 + "\" and \"" + conflict2 +
                                  "\".  The feature dependency chains that led to the conflict are: " + chain1 + " and " + chain2;
             IllegalArgumentException ffdcError = new IllegalArgumentException(conflictMsg);
@@ -1719,6 +1756,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
             }
         }
         return reportedErrors;
+
     }
 
     private String getFeatureName(String symbolicName) {
@@ -1727,6 +1765,38 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
             return symbolicName;
         }
         return fd.getFeatureName();
+    }
+
+    private static boolean isEeCompatible(String symbolicName) {
+        return symbolicName != null && symbolicName.lastIndexOf("eeCompatible") >= 0;
+    }
+
+    private static char getEeCompatibleVersion(String symbolicName) {
+        return symbolicName.charAt(symbolicName.lastIndexOf("-") + 1);
+    }
+
+    private static String getEeCompatiblePlatform(String symbolicName, boolean ignoreVersion) {
+        char charVersion = getEeCompatibleVersion(symbolicName);
+        switch (charVersion) {
+            case '9':
+                return "Jakarta EE" + ((ignoreVersion) ? "" : " " + charVersion);
+            case '8':
+            case '7':
+            case '6':
+                return "Java EE" + ((ignoreVersion) ? "" : " " + charVersion);
+            default:
+                return "";
+        }
+    }
+
+    private String getPreferredEePlatform(String symbolicName) {
+        ProvisioningFeatureDefinition fdefinition = featureRepository.getFeature(symbolicName);
+        for (FeatureResource fr : fdefinition.getConstituents(SubsystemContentType.FEATURE_TYPE)) {
+            if (isEeCompatible(fr.getSymbolicName())) {
+                return getEeCompatiblePlatform(fr.getSymbolicName(), false); // include ee version
+            }
+        }
+        return "";
     }
 
     private String buildChainString(List<String> chain, String theConflictFeature) {
@@ -1800,10 +1870,10 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * Issues appropriate diagnostics & messages for this environment.
      *
      * @param listName
-     *            the name of the feature that was installed
+     *                          the name of the feature that was installed
      * @param installStatus
-     *            Status object holding any warnings or exceptions that occurred
-     *            during bundle installation
+     *                          Status object holding any warnings or exceptions that occurred
+     *                          during bundle installation
      * @return true if no exceptions occurred during bundle installation, false otherwise.
      */
     protected boolean checkInstallStatus(BundleInstallStatus installStatus) throws IllegalStateException {
@@ -1917,8 +1987,8 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * and issue appropriate diagnostics & messages for this environment.
      *
      * @param bundleStatus
-     *            Status object holding any exceptions that occurred
-     *            during bundle start or stop/uninstall
+     *                         Status object holding any exceptions that occurred
+     *                         during bundle start or stop/uninstall
      * @return true if no exceptions occurred while stating bundles, false otherwise.
      */
     protected boolean checkBundleStatus(BundleLifecycleStatus bundleStatus) {
@@ -1972,7 +2042,7 @@ public class FeatureManager implements FeatureProvisioner, FrameworkReady, Manag
      * necessarily know that it's ours..).
      *
      * @param level
-     *            StartLevel to change to
+     *                  StartLevel to change to
      * @return BundleStartStatus containing any exceptions encountered
      *         during the StartLevel change operation.
      */

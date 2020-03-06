@@ -575,6 +575,10 @@ public final class FeatureRepository implements FeatureResolver.Repository {
             // -- knownFeature entry will be replaced by caller
             cachedFeatures.remove(cachedAttr.symbolicName);
             publicFeatureNameToSymbolicName.remove(lowerFeature(cachedAttr.featureName));
+            if (def.getSymbolicAlias() != null) {
+                publicFeatureNameToSymbolicName.remove(lowerFeature(def.getSymbolicAlias()));
+            }
+            // TODO: Check whether any other data needs removal; i remember seeing something earlier
             if (cachedAttr.isAutoFeature)
                 autoFeatures.remove(def);
         }
@@ -613,14 +617,17 @@ public final class FeatureRepository implements FeatureResolver.Repository {
             knownFeatures.put(cachedAttr.featureFile, def);
 
             // If there is a public feature name,
-            // populate the map with down-case featureName to real symbolic name
-            // populate the map with down-case symbolicName to real symbolic name
+            // populate the map with down-case featureName to real symbolic name, including alias
+            // populate the map with down-case symbolicName to real symbolic name, including alias
             // Note: we only ignore case when looking up public feature names!
-            if (!cachedAttr.featureName.equals(cachedAttr.symbolicName))
+            if (!cachedAttr.featureName.equals(cachedAttr.symbolicName)) {
                 publicFeatureNameToSymbolicName.put(lowerFeature(cachedAttr.featureName), cachedAttr.symbolicName);
-            if (def.getVisibility() == Visibility.PUBLIC)
+            }
+            if (def.getVisibility() == Visibility.PUBLIC) {
                 publicFeatureNameToSymbolicName.put(lowerFeature(cachedAttr.symbolicName), cachedAttr.symbolicName);
-
+                if (def.getSymbolicAlias() != null)
+                    publicFeatureNameToSymbolicName.put(lowerFeature(def.getSymbolicAlias()), cachedAttr.symbolicName);
+            }
             // If this is an auto-feature, add it to that collection
             // we're going with the bold assertion that
             if (cachedAttr.isAutoFeature)
@@ -729,8 +736,8 @@ public final class FeatureRepository implements FeatureResolver.Repository {
     }
 
     /**
-     * @param featureName
-     * @return
+     * @param featureName The symbolic name, short name (public name), or alias of a feature.
+     * @return The feature definition corresponding to the supplied feature name.
      */
     @Override
     public ProvisioningFeatureDefinition getFeature(String featureName) {

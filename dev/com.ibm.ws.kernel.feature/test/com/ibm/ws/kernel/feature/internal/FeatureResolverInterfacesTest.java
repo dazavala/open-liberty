@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 IBM Corporation and others.
+ * Copyright (c) 2018, 2020 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -40,6 +40,7 @@ import org.osgi.framework.VersionRange;
 import com.ibm.ws.kernel.feature.AppForceRestart;
 import com.ibm.ws.kernel.feature.ProcessType;
 import com.ibm.ws.kernel.feature.Visibility;
+import com.ibm.ws.kernel.feature.internal.FeatureResolverInterfacesTest.TestFeature;
 import com.ibm.ws.kernel.feature.provisioning.ActivationType;
 import com.ibm.ws.kernel.feature.provisioning.FeatureResource;
 import com.ibm.ws.kernel.feature.provisioning.HeaderElementDefinition;
@@ -209,6 +210,114 @@ public class FeatureResolverInterfacesTest {
 
     }
 
+    // Feature renaming, i,e. aliasing, is a strict internal of the feature manager that
+    // enables support for conflicts involving incompatible combinations of ee features,
+    // where many of the names of features in javaee8/7/6 were changed in jakartaee9.
+    // Aliasing enables the feature manager to identify singleton conflicts between
+    // between equivalent features in different ee platforms in order that they are
+    // not returned in the resolve set.
+    // Note: This approach assumes all features of an ee platform are singleton.
+
+    // A feature renamed in a new release may provide a symbolic name alias set to its
+    // previous symbolic name.
+
+    @Test
+    public void testAutoFeaturesRenamedCapabilitiesResolved() {
+        FeatureResolver resolver = new FeatureResolverImpl();
+
+        Result result;
+        TestFeature.Builder autoFeature;
+
+        TestRepository repo = new TestRepository();
+        repo.add(TestFeature.create("com.example.featureA-1.0").shortName("featureA-1.0").symbolicAlias("com.example.aliasA-1.0").build());
+        repo.add(TestFeature.create("com.example.featureA-2.0").symbolicAlias("com.example.aliasA-2.0").build());
+        repo.add(TestFeature.create("com.example.featureB-1.0").build());
+        repo.add(TestFeature.create("com.example.featureC-1.0").symbolicAlias("com.example.aliasC-2.0").dependency("com.example.featureA-2.0").build());
+
+        // Resolve root and auto features to feature name
+        autoFeature = TestFeature.create("com.example.autoFeatureA-1.0");
+        autoFeature.autofeatureDependency("com.example.featureA-1.0");
+        autoFeature.autofeatureDependency("com.example.featureB-1.0");
+        repo.add(autoFeature.build());
+        result = resolver.resolveFeatures(repo, Arrays.asList("com.example.featureA-1.0", "com.example.featureB-1.0"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(false));
+        assertThat(result.getResolvedFeatures(), containsInAnyOrder("featureA-1.0", "com.example.featureB-1.0", "com.example.autoFeatureA-1.0"));
+
+        // Conflicting capabilities. Curious - this pattern should never exist.
+        autoFeature = TestFeature.create("com.example.autoFeatureB-1.0");
+        autoFeature.autofeatureDependency("com.example.featureA-1.0");
+        autoFeature.autofeatureDependency("com.example.featureC-1.0");
+        repo.add(autoFeature.build());
+        result = resolver.resolveFeatures(repo, Arrays.asList("com.example.featureA-1.0", "com.example.featureC-1.0"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(true));
+        assertThat(result.getResolvedFeatures(), containsInAnyOrder("com.example.featureC-1.0"));
+    }
+
+    @Test
+    public void testConflictsRenamedFeatures() {
+        FeatureResolver resolver = new FeatureResolverImpl();
+        Result result;
+
+        TestRepository repo = new TestRepository();
+
+        // Singletons, each and every one
+        repo.add(TestFeature.create("com.example.faces-2.5").shortName("faces-2.5").symbolicAlias("com.example.jsf-2.5").build());
+        repo.add(TestFeature.create("com.example.faces-2.4").shortName("faces-2.4").symbolicAlias("com.example.jsf-2.4").build());
+        repo.add(TestFeature.create("com.example.jsf-2.3").shortName("jsf-2.3").build());
+        repo.add(TestFeature.create("com.example.jsf-2.2").shortName("jsf-2.2").build());
+
+        // Note: These tests do not verify that conflicts were excluded from the resolve set.
+
+        // No conflict root features, aliased resolves to correct short name
+        result = resolver.resolveFeatures(repo, Arrays.asList("faces-2.4"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(false));
+        assertThat(result.getResolvedFeatures(), containsInAnyOrder("faces-2.4")); // Ensure alias is not in resolve set
+
+        // Conflicting root features, NONE aliased
+        result = resolver.resolveFeatures(repo, Arrays.asList("jsf-2.2", "jsf-2.3"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(true));
+        assertThat(result.getResolvedFeatures().isEmpty(), is(true));
+
+        // Conflicting root features, one aliased
+        result = resolver.resolveFeatures(repo, Arrays.asList("faces-2.4", "jsf-2.3"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(true));
+        assertThat(result.getResolvedFeatures().isEmpty(), is(true));
+
+        // No conflict root feature with one dependency, none aliased
+        repo.add(TestFeature.create("com.example.featureA-1.0").shortName("featureA-1.0").dependency("com.example.jsf-2.3").build());
+        result = resolver.resolveFeatures(repo, Arrays.asList("featureA-1.0"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(false));
+        assertThat(result.getResolvedFeatures(), containsInAnyOrder("featureA-1.0", "jsf-2.3"));
+
+        // Root features with conflicting dep chains of length=2, NONE aliased
+        repo.add(TestFeature.create("com.example.featureB-1.0").shortName("featureB-1.0").dependency("com.example.jsf-2.2").build());
+        result = resolver.resolveFeatures(repo, Arrays.asList("featureA-1.0", "featureB-1.0"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(true));
+        assertThat(result.getResolvedFeatures(), containsInAnyOrder("featureA-1.0", "featureB-1.0"));
+
+        // Root features with conflicting dep chains of length=2, one aliased
+        repo.add(TestFeature.create("com.example.featureC-1.0").shortName("featureC-1.0").dependency("com.example.faces-2.4").build());
+        result = resolver.resolveFeatures(repo, Arrays.asList("featureA-1.0", "featureC-1.0"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(true));
+        assertThat(result.getResolvedFeatures(), containsInAnyOrder("featureA-1.0", "featureC-1.0"));
+    }
+
+    @Test
+    public void testToleratesChoosesRenamedFeatures() {
+        FeatureResolver resolver = new FeatureResolverImpl();
+        Result result;
+        TestRepository repo = new TestRepository();
+
+        // Sniff test to exercise alias support in toleration scenario
+        repo.add(TestFeature.create("com.example.faces-2.4").shortName("faces-2.4").symbolicAlias("com.example.jsf-2.4").build());
+        repo.add(TestFeature.create("com.example.jsf-2.3").shortName("jsf-2.3").build());
+        repo.add(TestFeature.create("com.example.featureA-1,0").shortName("featureA-1.0").dependency("com.example.jsf-2.3", "2.4").build());
+        repo.add(TestFeature.create("com.example.featureB-1,0").shortName("featureB-1.0").dependency("com.example.faces-2.4").build());
+        result = resolver.resolveFeatures(repo, Arrays.asList("featureA-1.0", "featureB-1.0"), Collections.<String> emptySet(), false);
+        assertThat(result.hasErrors(), is(false));
+        assertThat(result.getResolvedFeatures(), containsInAnyOrder("featureA-1.0", "featureB-1.0", "faces-2.4"));
+    }
+
     /**
      * Test implementation of {@link FeatureResolver.Repository} which holds the features in a map.
      * <p>
@@ -237,7 +346,9 @@ public class FeatureResolverInterfacesTest {
         public void add(ProvisioningFeatureDefinition feature) {
             features.put(feature.getSymbolicName(), feature);
             features.put(feature.getIbmShortName(), feature);
-
+            if (feature.getSymbolicAlias() != null) {
+                features.put(feature.getSymbolicAlias(), feature);
+            }
             if (feature.isAutoFeature()) {
                 autoFeatures.put(feature.getSymbolicName(), feature);
                 autoFeatures.put(feature.getIbmShortName(), feature);
@@ -261,6 +372,7 @@ public class FeatureResolverInterfacesTest {
         private String shortName;
         private boolean isSingleton;
         private Collection<Filter> autofeatureFilters;
+        private String symbolicAlias;
 
         public static class Builder {
             private final TestFeature instance = new TestFeature();
@@ -272,6 +384,11 @@ public class FeatureResolverInterfacesTest {
 
             public Builder shortName(String shortName) {
                 instance.shortName = shortName;
+                return this;
+            }
+
+            public Builder symbolicAlias(String alias) {
+                instance.symbolicAlias = alias;
                 return this;
             }
 
@@ -322,6 +439,7 @@ public class FeatureResolverInterfacesTest {
             builder.instance.symbolicName = symbolicName;
             builder.instance.visibility = Visibility.PUBLIC;
             builder.instance.isSingleton = true;
+            builder.instance.symbolicAlias = null;
             return builder;
         }
 
@@ -477,6 +595,10 @@ public class FeatureResolverInterfacesTest {
             throw new UnsupportedOperationException();
         }
 
+        @Override
+        public String getSymbolicAlias() {
+            return symbolicAlias;
+        }
     }
 
     /**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corporation and others.
+ * Copyright (c) 2014, 2020 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -118,7 +118,8 @@ public class FeatureResolverImpl implements FeatureResolver {
      * java.util.Collection, java.util.Set,
      * boolean, java.util.EnumSet)
      * Here are the steps this uses to resolve:
-     * 1) Primes the selected features with the pre-resolved and the root features (conflicts are reported, but no permutations for backtracking)
+     * 1) Primes the selected features with the pre-resolved and the root features (conflicts are reported, but no permutations for backtracking). Use symbolic alias as the
+     * preferred symbolic name when possible.
      * 2) Resolve the root features
      * 3) Check if there are any auto features to resolve; if so return to step 2 and resolve the auto-features as root features
      */
@@ -188,8 +189,8 @@ public class FeatureResolverImpl implements FeatureResolver {
                     // remove pre-resolved features from the root
                     iRootFeatures.remove();
                 } else {
-                    // set the full symbolicName
-                    iRootFeatures.set(rootFeatureDef.getSymbolicName());
+                    // set the full symbolicName; use alias as the preferred name when it exists
+                    iRootFeatures.set((rootFeatureDef.getSymbolicAlias() == null ? rootFeatureDef.getSymbolicName() : rootFeatureDef.getSymbolicAlias()));
                 }
             } else {
                 selectionContext.getResult().addMissing(rootFeatureName);
@@ -219,7 +220,8 @@ public class FeatureResolverImpl implements FeatureResolver {
             if (preResolvedDef == null) {
                 return Collections.emptySet();
             } else {
-                preResolvedSymbolicNames.add(preResolvedDef.getSymbolicName());
+                // use alias as the preferred name when it exists
+                preResolvedSymbolicNames.add(preResolvedDef.getSymbolicAlias() == null ? preResolvedDef.getSymbolicName() : preResolvedDef.getSymbolicAlias());
             }
         }
         return preResolvedSymbolicNames;
@@ -335,7 +337,7 @@ public class FeatureResolverImpl implements FeatureResolver {
         }
 
         // first check if the feature is blacklisted as already in conflict
-        String featureName = selectedFeature.getSymbolicName();
+        String featureName = selectedFeature.getSymbolicAlias() == null ? selectedFeature.getSymbolicName() : selectedFeature.getSymbolicAlias();
         String baseFeatureName = parseNameAndVersion(featureName)[0];
         if (selectionContext.isBlackListed(baseFeatureName)) {
             return;
@@ -349,12 +351,12 @@ public class FeatureResolverImpl implements FeatureResolver {
             }
         }
 
-        if (chain.contains(selectedFeature.getSymbolicName())) {
+        if (chain.contains(featureName)) { // Use alias when it exists
             // must be in a cycle
             return;
         }
 
-        chain.addLast(selectedFeature.getSymbolicName());
+        chain.addLast(featureName);
         try {
             // Depth-first: process any included features first.
             // Postpone decisions on variable candidates until after the first pass
@@ -366,7 +368,11 @@ public class FeatureResolverImpl implements FeatureResolver {
             for (FeatureResource included : includes) {
                 String symbolicName = included.getSymbolicName();
                 if (symbolicName != null) {
-                    String[] nameAndVersion = parseNameAndVersion(included.getSymbolicName());
+                    ProvisioningFeatureDefinition featureDef = selectionContext.getRepository().getFeature(symbolicName);
+                    if (featureDef != null && featureDef.getSymbolicAlias() != null) {
+                        symbolicName = featureDef.getSymbolicAlias(); // for constituent use alias when it exists
+                    }
+                    String[] nameAndVersion = parseNameAndVersion(symbolicName);
                     String baseName = nameAndVersion[0];
                     includedBaseFeatureNames.add(baseName);
                 }
@@ -408,6 +414,10 @@ public class FeatureResolverImpl implements FeatureResolver {
             return;
         }
 
+        ProvisioningFeatureDefinition featureDef = selectionContext.getRepository().getFeature(symbolicName);
+        if (featureDef != null && featureDef.getSymbolicAlias() != null) {
+            symbolicName = featureDef.getSymbolicAlias(); // Use alias for constituent when it exists
+        }
         String[] nameAndVersion = parseNameAndVersion(symbolicName);
         String baseSymbolicName = nameAndVersion[0];
         String preferredVersion = nameAndVersion[1];
@@ -433,7 +443,7 @@ public class FeatureResolverImpl implements FeatureResolver {
         if (preferredCandidateDef != null && isAccessible(includingFeature, preferredCandidateDef)) {
             checkForFullSymbolicName(preferredCandidateDef, symbolicName, chain.getLast());
             isSingleton = preferredCandidateDef.isSingleton();
-            candidateNames.add(symbolicName);
+            candidateNames.add(symbolicName); // use symbolic alias when it exists
         }
 
         // Check for tolerated versions; but only if the preferred version is a singleton or we did not find the preferred version
@@ -448,12 +458,16 @@ public class FeatureResolverImpl implements FeatureResolver {
                 }
                 String toleratedSymbolicName = baseSymbolicName + '-' + tolerate;
                 ProvisioningFeatureDefinition toleratedCandidateDef = selectionContext.getRepository().getFeature(toleratedSymbolicName);
-                if (toleratedCandidateDef != null && !!!candidateNames.contains(toleratedCandidateDef.getSymbolicName()) && isAccessible(includingFeature, toleratedCandidateDef)) {
-                    checkForFullSymbolicName(toleratedCandidateDef, toleratedSymbolicName, chain.getLast());
-                    isSingleton |= toleratedCandidateDef.isSingleton();
-                    // Only check against the allowed tolerations if this candidate feature is public or protected (NOT private)
-                    if (isAllowedToleration(selectionContext, toleratedCandidateDef, allowedTolerations, overrideTolerates, baseSymbolicName, tolerate)) {
-                        candidateNames.add(toleratedCandidateDef.getSymbolicName());
+                if (toleratedCandidateDef != null) {
+                    // use symbolic alias when it exists
+                    String toleratedCandidateSymbolicName = toleratedCandidateDef.getSymbolicAlias() == null ? toleratedCandidateDef.getSymbolicName() : toleratedCandidateDef.getSymbolicAlias();
+                    if (!!!candidateNames.contains(toleratedCandidateSymbolicName) && isAccessible(includingFeature, toleratedCandidateDef)) {
+                        checkForFullSymbolicName(toleratedCandidateDef, toleratedSymbolicName, chain.getLast());
+                        isSingleton |= toleratedCandidateDef.isSingleton();
+                        // Only check against the allowed tolerations if this candidate feature is public or protected (NOT private)
+                        if (isAllowedToleration(selectionContext, toleratedCandidateDef, allowedTolerations, overrideTolerates, baseSymbolicName, tolerate)) {
+                            candidateNames.add(toleratedCandidateSymbolicName);
+                        }
                     }
                 }
             }
@@ -520,7 +534,8 @@ public class FeatureResolverImpl implements FeatureResolver {
      * @param includingFeature
      */
     private void checkForFullSymbolicName(ProvisioningFeatureDefinition candidateDef, String symbolicName, String includingFeature) {
-        if (!!!symbolicName.equals(candidateDef.getSymbolicName())) {
+        if (!!!symbolicName.equals(candidateDef.getSymbolicName())
+            && (candidateDef.getSymbolicAlias() != null && !!!candidateDef.getSymbolicAlias().equals(symbolicName))) {
             throw new IllegalArgumentException("A feature is not allowed to use short feature names when including other features. "
                                                + "Detected short name \"" + symbolicName + "\" being used instead of \"" + candidateDef.getSymbolicName()
                                                + "\" by feature \"" + includingFeature + "\".");
@@ -545,7 +560,8 @@ public class FeatureResolverImpl implements FeatureResolver {
 
         // Iterate over all of the auto-feature definitions...
         for (ProvisioningFeatureDefinition autoFeatureDef : selectionContext.getRepository().getAutoFeatures()) {
-            String featureSymbolicName = autoFeatureDef.getSymbolicName();
+            // For consistency, expect alias (when it exists) in seenAutoFeatures (param) and autoFeatureToProcess (result).
+            String featureSymbolicName = autoFeatureDef.getSymbolicAlias() == null ? autoFeatureDef.getSymbolicName() : autoFeatureDef.getSymbolicAlias();
 
             // if we haven't been here before, check the capability header against the list of
             // installed features to see if it should be auto-installed.
@@ -801,7 +817,9 @@ public class FeatureResolverImpl implements FeatureResolver {
                 if (featureDef != null && featureDef.isSingleton()) {
                     // Only need to prime selected for singletons.
                     // Be sure to get the real symbolic name; don't just use the feature name used to do the lookup
-                    String featureSymbolicName = featureDef.getSymbolicName();
+
+                    // prime with alias for preferred name when it exists
+                    String featureSymbolicName = featureDef.getSymbolicAlias() == null ? featureDef.getSymbolicName() : featureDef.getSymbolicAlias();
                     String[] nameAndVersion = parseNameAndVersion(featureSymbolicName);
                     String base = nameAndVersion[0];
                     String preferredVersion = nameAndVersion[1];
