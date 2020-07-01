@@ -250,21 +250,19 @@ public abstract class BasicValidation_Common extends FATServletClient {
     }
 
     /**
-     * Ensure that there were no feature errors during server startup
-     * Error currently searched for:
-     * CWWKF0033E
-     * CWWKE0702E
+     * Ensure that there were no feature conflict and bundle resolution errors
+     * during server startup.
      */
     @Test
     public void testCheckLogsForErrors() throws Exception {
-        //CWWKF0033E: The singleton features com.ibm.websphere.appserver.javaeeCompatible-6.0 and com.ibm.websphere.appserver.javaeeCompatible-7.0
-        //cannot be loaded at the same time.  The configured features <featureA> and <featureB> include one or more features
-        //that cause the conflict. Your configuration is not supported; update server.xml to remove incompatible features.
-        List<String> errMsgs = getServer().findStringsInLogsAndTrace("CWWKF0033E");
-        assertTrue(errMsgs.isEmpty());
-
-        //CWWKE0702E: Could not resolve module:
-        errMsgs = getServer().findStringsInLogsAndTrace("CWWKE0702E");
+        // CWWKF0033E: The configured features include one or more features that cause a singleton
+        //     toleration conflict.
+        // CWWKF0043E: The configured features include one or more incompatible features that support
+        //     the same EE platform, e.g.  jsfContainer-2.3 (javaee8) and jsp-2.2 (javaee6).
+        // CWWKF0044E: The configured features include one or more incompatible features that support
+        //     different EE platforms; e.g. servlet-5.0 (jakartaee9) and javaee-8.0.
+        // CWWKE0702E: Bundle resolution failed due to not installing conflicting features.
+        List<String> errMsgs = getServer().findStringsInLogsAndTrace("CWWKF0033E|CWWKF0043E|CWWKF0044E|CWWKE0702E");
         assertTrue(errMsgs.isEmpty());
     }
 
