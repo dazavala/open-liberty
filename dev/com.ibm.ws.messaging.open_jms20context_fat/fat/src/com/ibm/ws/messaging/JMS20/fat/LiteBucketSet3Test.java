@@ -17,17 +17,19 @@ import java.io.IOException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import componenttest.topology.impl.LibertyServer;
-import componenttest.topology.impl.LibertyServerFactory;
 import com.ibm.websphere.simplicity.ShrinkHelper;
 
-public class LiteBucketSet3Test {
-    private static LibertyServer engineServer =
-        LibertyServerFactory.getLibertyServer("JMSContextEngine");
+import componenttest.custom.junit.runner.FATRunner;
+import componenttest.topology.impl.LibertyServer;
+import componenttest.topology.impl.LibertyServerFactory;
 
-    private static LibertyServer clientServer =
-        LibertyServerFactory.getLibertyServer("JMSContextClient");
+@RunWith(FATRunner.class)
+public class LiteBucketSet3Test {
+    private static LibertyServer engineServer = LibertyServerFactory.getLibertyServer("JMSContextEngine");
+
+    private static LibertyServer clientServer = LibertyServerFactory.getLibertyServer("JMSContextClient");
     private static final int clientPort = clientServer.getHttpDefaultPort();
     private static final String clientHost = clientServer.getHostname();
 
@@ -42,13 +44,13 @@ public class LiteBucketSet3Test {
     @BeforeClass
     public static void testConfigFileChange() throws Exception {
         engineServer.copyFileToLibertyInstallRoot(
-            "lib/features",
-            "features/testjmsinternals-1.0.mf");
+                                                  "lib/features",
+                                                  "features/testjmsinternals-1.0.mf");
         engineServer.setServerConfigurationFile("JMSContextEngine_TQ.xml");
 
         clientServer.copyFileToLibertyInstallRoot(
-            "lib/features",
-            "features/testjmsinternals-1.0.mf");
+                                                  "lib/features",
+                                                  "features/testjmsinternals-1.0.mf");
         clientServer.setServerConfigurationFile("JMSContextClient_TQ.xml");
         TestUtils.addDropinsWebApp(clientServer, appName, appPackages);
 
@@ -60,13 +62,13 @@ public class LiteBucketSet3Test {
     public static void tearDown() {
         try {
             clientServer.stopServer();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
             engineServer.stopServer();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

@@ -17,20 +17,22 @@ import java.io.IOException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import com.ibm.websphere.simplicity.ShrinkHelper;
+
+import componenttest.custom.junit.runner.FATRunner;
 import componenttest.custom.junit.runner.Mode;
 import componenttest.custom.junit.runner.Mode.TestMode;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.impl.LibertyServerFactory;
-import com.ibm.websphere.simplicity.ShrinkHelper;
 
+@RunWith(FATRunner.class)
 @Mode(TestMode.FULL)
 public class JMSContextTest_118068_TQ {
-    private static LibertyServer engineServer =
-        LibertyServerFactory.getLibertyServer("JMSContextEngine_118068");
+    private static LibertyServer engineServer = LibertyServerFactory.getLibertyServer("JMSContextEngine_118068");
 
-    private static LibertyServer clientServer =
-        LibertyServerFactory.getLibertyServer("JMSContextClient_118068");
+    private static LibertyServer clientServer = LibertyServerFactory.getLibertyServer("JMSContextClient_118068");
     private static final int clientPort = clientServer.getHttpDefaultPort();
     private static final String clientHost = clientServer.getHostname();
 
@@ -46,13 +48,13 @@ public class JMSContextTest_118068_TQ {
     @BeforeClass
     public static void testConfigFileChange() throws Exception {
         engineServer.copyFileToLibertyInstallRoot(
-            "lib/features",
-            "features/testjmsinternals-1.0.mf");
+                                                  "lib/features",
+                                                  "features/testjmsinternals-1.0.mf");
         engineServer.setServerConfigurationFile("JMSContextEngine_TQ.xml");
 
         clientServer.copyFileToLibertyInstallRoot(
-            "lib/features",
-            "features/testjmsinternals-1.0.mf");
+                                                  "lib/features",
+                                                  "features/testjmsinternals-1.0.mf");
         clientServer.setServerConfigurationFile("JMSContextClient_TQ.xml");
         TestUtils.addDropinsWebApp(clientServer, appName, appPackages);
 
@@ -64,13 +66,13 @@ public class JMSContextTest_118068_TQ {
     public static void tearDown() {
         try {
             clientServer.stopServer();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
             engineServer.stopServer();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

@@ -17,20 +17,22 @@ import java.io.IOException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import com.ibm.websphere.simplicity.ShrinkHelper;
+
+import componenttest.custom.junit.runner.FATRunner;
 import componenttest.custom.junit.runner.Mode;
 import componenttest.custom.junit.runner.Mode.TestMode;
 import componenttest.topology.impl.LibertyServer;
 import componenttest.topology.impl.LibertyServerFactory;
-import com.ibm.websphere.simplicity.ShrinkHelper;
 
+@RunWith(FATRunner.class)
 @Mode(TestMode.FULL)
 public class JMSContextTest_118067 {
-    private static LibertyServer engineServer =
-        LibertyServerFactory.getLibertyServer("JMSContextEngine");
+    private static LibertyServer engineServer = LibertyServerFactory.getLibertyServer("JMSContextEngine");
 
-    private static LibertyServer clientServer =
-        LibertyServerFactory.getLibertyServer("JMSContextClient");
+    private static LibertyServer clientServer = LibertyServerFactory.getLibertyServer("JMSContextClient");
     private static final int clientPort = clientServer.getHttpDefaultPort();
     private static final String clientHost = clientServer.getHostname();
 
@@ -46,13 +48,13 @@ public class JMSContextTest_118067 {
     @BeforeClass
     public static void testConfigFileChange() throws Exception {
         engineServer.copyFileToLibertyInstallRoot(
-            "lib/features",
-            "features/testjmsinternals-1.0.mf");
+                                                  "lib/features",
+                                                  "features/testjmsinternals-1.0.mf");
         engineServer.setServerConfigurationFile("JMSContextEngine.xml");
 
         clientServer.copyFileToLibertyInstallRoot(
-            "lib/features",
-            "features/testjmsinternals-1.0.mf");
+                                                  "lib/features",
+                                                  "features/testjmsinternals-1.0.mf");
         clientServer.setServerConfigurationFile("JMSContextClient.xml");
         TestUtils.addDropinsWebApp(clientServer, appName, appPackages);
 
@@ -64,20 +66,20 @@ public class JMSContextTest_118067 {
     public static void tearDown() {
         try {
             clientServer.stopServer();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
             engineServer.stopServer();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         ShrinkHelper.cleanAllExportedArchives();
     }
 
-    // 118067_10 : Create a queue with queue name as null and send message to this queue 
+    // 118067_10 : Create a queue with queue name as null and send message to this queue
     // Message send options may be specified using one or more of the following methods:
     // setDeliveryMode, setPriority, setTimeToLive, setDeliveryDelay,
     // setDisableMessageTimestamp, setDisableMessageID and setAsync.
@@ -96,7 +98,7 @@ public class JMSContextTest_118067 {
         assertTrue("testQueueNameNull_TcpIp_SecOff failed ", testResult);
     }
 
-    // 118067_11 : Create a queue with queue name as empty String and send message to this queue 
+    // 118067_11 : Create a queue with queue name as empty String and send message to this queue
     // Message send options may be specified using one or more of the following methods:
     // setDelivery, setPriority, setTimeToLive, setDeliveryDelay,
     // setDisableMessageTimestamp, setDisableMessageID and setAsync.
@@ -115,7 +117,7 @@ public class JMSContextTest_118067 {
         assertTrue("testQueueNameEmptyString_TcpIp_SecOff failed ", testResult);
     }
 
-    // 118067_11 : Create a queue with queue name as empty String and send message to this queue 
+    // 118067_11 : Create a queue with queue name as empty String and send message to this queue
     // Message send options may be specified using one or more of the following methods:
     // setDeliveryMode, setPriority, setTimeToLive, setDeliveryDelay,
     // setDisableMessageTimestamp, setDisableMessageID and setAsync.
@@ -134,7 +136,7 @@ public class JMSContextTest_118067 {
         assertTrue("testQueueNameWildChars_TcpIp_SecOff failed ", testResult);
     }
 
-    // 118067_11 : Create a queue with queue name containing spaces and send message to this queue 
+    // 118067_11 : Create a queue with queue name containing spaces and send message to this queue
     // Message send options may be specified using one or more of the following methods:
     // setDeliveryMode, setPriority, setTimeToLive, setDeliveryDelay, setDisableMessageTimestamp,
     // setDisableMessageID and setAsync.
@@ -185,7 +187,7 @@ public class JMSContextTest_118067 {
     }
 
     // 118067_11 :Test if queue name is case sensitive. Try to create a queue in small
-    // case and send message to queuename in upper case 
+    // case and send message to queuename in upper case
 
     @Mode(TestMode.FULL)
     @Test
@@ -299,7 +301,7 @@ public class JMSContextTest_118067 {
         assertTrue("testTopicNameCaseSensitive_TcpIp_SecOff failed ", testResult);
     }
 
-    // 118067_9 : Test setting message properties on createProducer using method chaining. 
+    // 118067_9 : Test setting message properties on createProducer using method chaining.
     // Message send options may be specified using one or more of the following methods:
     // setDeliveryMode, setPriority, setTimeToLive, setDeliveryDelay,
     // setDisableMessageTimestamp, setDisableMessageID and setAsync.
@@ -310,7 +312,7 @@ public class JMSContextTest_118067 {
         assertTrue("testSetMessageProperty_Bindings_SecOff failed ", testResult);
     }
 
-    // 118067_9 : Test setting message properties on createProducer using method chaining. 
+    // 118067_9 : Test setting message properties on createProducer using method chaining.
     // Message send options may be specified using one or more of the following methods:
     // setDeliveryMode, setPriority, setTimeToLive, setDeliveryDelay,
     // setDisableMessageTimestamp, setDisableMessageID and setAsync.
