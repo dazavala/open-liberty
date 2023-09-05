@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
@@ -45,8 +45,8 @@ public class TimerTest {
             System.out.println("TIMER RUN TOO FAST: " + deltaMillis);
             failed.set(true);
         }
-        if (numRun.addAndGet(1) == 5) {
-            System.out.println("TIMER RUN 5 TIMES");
+        if (numRun.addAndGet(1) == 10) {
+            System.out.println("TIMER RUN 10 TIMES");
             if (failed.get()) {
                 System.out.println("TIMER TEST - FAILED");
             } else {

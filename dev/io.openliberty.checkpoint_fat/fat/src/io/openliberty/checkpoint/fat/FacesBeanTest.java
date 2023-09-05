@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
@@ -52,7 +52,12 @@ public class FacesBeanTest extends FATServletClient {
 
     @ClassRule
     public static RepeatTests repeatTests = MicroProfileActions.repeat(FACES_BEAN_SERVER_NAME, TestMode.LITE,
-                                                                       MicroProfileActions.MP41, MicroProfileActions.MP50 /* , MicroProfileActions.MP60 */);
+                                                                       /* MicroProfileActions.MP41, MicroProfileActions.MP50 */ MicroProfileActions.MP60);
+
+//    @ClassRule
+//    public static RepeatTests r = RepeatTests.with(new EE8FeatureReplacementAction().forServers(FACES_BEAN_SERVER_NAME))
+//                    .andWith(new JakartaEE9Action().forServers(FACES_BEAN_SERVER_NAME).fullFATOnly())
+//                    .andWith(new JakartaEE10Action().forServers(FACES_BEAN_SERVER_NAME).fullFATOnly());
 
 //    @ClassRule
 //    public static RepeatTests repeatTests;
