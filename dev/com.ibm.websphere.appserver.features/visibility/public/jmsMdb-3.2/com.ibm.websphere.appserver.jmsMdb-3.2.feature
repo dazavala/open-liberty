@@ -12,3 +12,4 @@ Subsystem-Name: JMS Message-Driven Beans 3.2
 kind=ga
 edition=base
 superseded-by=mdb-3.2
+WLP-InstantOn-Enabled: true; type:=beta
