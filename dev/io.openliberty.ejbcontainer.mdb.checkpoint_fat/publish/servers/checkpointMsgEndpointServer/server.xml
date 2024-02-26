@@ -146,6 +146,7 @@
     <variable name="AUTHDATA_USER" defaultValue="user" />
 
     <authData id="endpointAuthData" password="${AUTHDATA_PASSWORD}" user="${AUTHDATA_USER}"/>
+    <authData id="endpointAuthDataUpdate" password="{xor}HhwLCW4PCBs=" user="ACTV1USER"/>
     <!-- Expected config at restore
     <authData id="endpointAuthData" password="{xor}HhwLCW4PCBs=" user="ACTV1USER"/>
     -->

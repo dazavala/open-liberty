@@ -38,6 +38,7 @@ import com.ibm.websphere.simplicity.log.Log;
 import componenttest.custom.junit.runner.AlwaysPassesTest;
 import componenttest.topology.impl.LibertyServer;
 import io.openliberty.checkpoint.spi.CheckpointPhase;
+import io.openliberty.ejbcontainer.mdb.ra.checkpoint.fat.tests.AuthDataTest;
 import io.openliberty.ejbcontainer.mdb.ra.checkpoint.fat.tests.ConfigChangesTest;
 import io.openliberty.ejbcontainer.mdb.ra.checkpoint.fat.tests.MsgEndpointTest;
 
@@ -45,7 +46,8 @@ import io.openliberty.ejbcontainer.mdb.ra.checkpoint.fat.tests.MsgEndpointTest;
 @SuiteClasses({
                 AlwaysPassesTest.class,
                 MsgEndpointTest.class,
-                ConfigChangesTest.class
+                ConfigChangesTest.class,
+                AuthDataTest.class
 })
 public class FATSuite {
 
