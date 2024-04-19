@@ -22,3 +22,4 @@ Subsystem-Name: Message Server Security 1.0
   com.ibm.ws.messaging.security.common
 kind=ga
 edition=base
+WLP-InstantOn-Enabled: true; type:=beta

@@ -20,3 +20,4 @@ Subsystem-Name: Messaging Server 3.0 Security
 kind=ga
 edition=base
 WLP-Activation-Type: parallel
+WLP-InstantOn-Enabled: true; type:=beta

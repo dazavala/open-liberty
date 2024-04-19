@@ -35,7 +35,8 @@ tested.features: \
   servlet-6.0,\
   pages-3.1,\
   cdi-4.0,\
-  connectors-2.1
+  connectors-2.1,\
+  servlet-4.0
 
 -buildpath: \
   com.ibm.websphere.javaee.annotation.1.1;version=latest,\
@@ -45,5 +46,6 @@ tested.features: \
   com.ibm.websphere.javaee.ejb.3.1;version=latest,\
   com.ibm.websphere.javaee.jms.2.0;version=latest,\
   com.ibm.websphere.javaee.transaction.1.1;version=latest,\
-  com.ibm.websphere.javaee.cdi.1.0;version=latest
+  com.ibm.websphere.javaee.cdi.1.0;version=latest,\
+  com.ibm.websphere.appserver.api.kernel.service;version=latest
 
